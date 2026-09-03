@@ -1,3 +1,5 @@
+// TEST COMMENT FOR MR PIPELINE
+
 package net.chrisrichardson.ftgo.accountservice.api;
 
 import io.eventuate.tram.commands.common.Command;
