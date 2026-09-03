@@ -1,0 +1,40 @@
+# hss_idiom_forge drift gate — LOCAL SHELL RUNNER variant.
+# Copy into the CORPUS repo's .gitlab-ci.yml. Runs on a shell-executor runner that has
+# swipl + the hss_idiom_forge venv on this machine, so there is no docker image and no
+# torch install per run. See README "Work instructions" for registering the runner.
+#
+# Set FORGE / JI_PY_BIN to where hss_idiom_forge and its venv live on the runner host.
+
+stages: [idiom-drift]
+
+idiom-drift:
+  stage: idiom-drift
+  tags: [idiom-local]                                    # MUST match the runner's tag
+  variables:
+    GIT_DEPTH: "0"                                       # full history — need the commit range
+    FORGE: "/home/jgeorgis/work/holonic/hss_idiom_forge"             # the tool checkout on the runner host
+    JI_PY_BIN: "/home/jgeorgis/work/holonic/hss_idiom_forge/embed/.venv/bin/python"
+  script:
+    - export JI_CORPUS="$CI_PROJECT_DIR" JI_NO_JOERN=1 JI_PY="$JI_PY_BIN"
+    # token for the MR note/labels. Prefer a masked CI variable MR_BOT_TOKEN (bot token,
+    # scope api); the fallback below only works because the local runner runs as a user
+    # who can read a token file.
+    - export MR_BOT_TOKEN="${MR_BOT_TOKEN:-$(cat "${GITLAB_TOKEN_FILE:-/dev/null}" 2>/dev/null)}"
+    - test -f "$FORGE/drift/baseline.json" || (cd "$FORGE" && JI_NO_JOERN=1 bash scripts/bootstrap.sh)
+    - cd "$FORGE" && "$JI_PY_BIN" pipeline/commit_drift.py
+        --old "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-$CI_COMMIT_BEFORE_SHA}"
+        --new "$CI_COMMIT_SHA"
+        --json "$CI_PROJECT_DIR/idiom-drift.json"
+        --md   "$CI_PROJECT_DIR/idiom-drift.md"
+        --codequality "$CI_PROJECT_DIR/idiom-codequality.json"
+        --gate flips
+        --mr-comment
+  artifacts:
+    when: always                                         # keep the report even when the gate fails
+    paths: [idiom-drift.json, idiom-drift.md]
+    expose_as: "Rule and embedding drift"
+    reports:
+      codequality: idiom-codequality.json                # -> native Code Quality MR widget
+  rules:
+    - if: $CI_MERGE_REQUEST_IID                          # merge requests
+    - if: $CI_COMMIT_BRANCH == "master"                  # and pushes to the default branch
