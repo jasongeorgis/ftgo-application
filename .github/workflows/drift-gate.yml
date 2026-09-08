@@ -1,11 +1,11 @@
-name: Drift Gate
+name: Drift Gate Trigger
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  gate:
+  call-lambda:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,9 +59,4 @@ jobs:
           fi
 
           verdict=$(python3 -c "import json; print(json.load(open('/tmp/response.json'))['verdict'])")
-          echo "Verdict: $verdict"
-
-          if [ "$verdict" != "PASS" ]; then
-            echo "Drift gate verdict: FAIL"
-            exit 1
-          fi
+          echo "Verdict: $verdict (see the 'CodeIntent Drift Gate (dummy)' check for the actual result)"
