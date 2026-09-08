@@ -45,4 +45,5 @@ public class AuthorizeCommand implements Command {
     this.orderId = orderId;
   }
   // trigger: second comment-only edit to re-test the Actions drift gate
+  // trigger: verify renamed workflow + decoupled exit code
 }
