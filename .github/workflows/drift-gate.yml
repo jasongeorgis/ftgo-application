@@ -1,0 +1,67 @@
+name: Drift Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute diff and call drift gate
+        env:
+          API_KEY: ${{ secrets.DRIFT_GATE_API_KEY }}
+          API_URL: https://qgd63ljozc.execute-api.us-east-1.amazonaws.com/demo/verify
+          PR_OWNER: ${{ github.repository_owner }}
+          PR_REPO: ${{ github.event.repository.name }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          git diff "origin/${PR_BASE_REF}...HEAD" > /tmp/pr.diff
+
+          python3 <<'PYEOF'
+          import json
+          import os
+
+          with open("/tmp/pr.diff") as f:
+              diff_text = f.read()
+
+          payload = {
+              "owner": os.environ["PR_OWNER"],
+              "repo": os.environ["PR_REPO"],
+              "sha": os.environ["PR_SHA"],
+              "diff": diff_text,
+          }
+
+          with open("/tmp/payload.json", "w") as f:
+              json.dump(payload, f)
+          PYEOF
+
+          http_status=$(curl -s -o /tmp/response.json -w "%{http_code}" -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: $API_KEY" \
+            -d @/tmp/payload.json)
+
+          echo "HTTP status: $http_status"
+          cat /tmp/response.json
+          echo
+
+          if [ "$http_status" != "200" ]; then
+            echo "Drift gate call failed (HTTP $http_status)"
+            exit 1
+          fi
+
+          verdict=$(python3 -c "import json; print(json.load(open('/tmp/response.json'))['verdict'])")
+          echo "Verdict: $verdict"
+
+          if [ "$verdict" != "PASS" ]; then
+            echo "Drift gate verdict: FAIL"
+            exit 1
+          fi
