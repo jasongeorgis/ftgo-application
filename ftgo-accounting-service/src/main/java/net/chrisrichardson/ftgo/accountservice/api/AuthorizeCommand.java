@@ -44,4 +44,5 @@ public class AuthorizeCommand implements Command {
   public void setOrderId(Long orderId) {
     this.orderId = orderId;
   }
+  // trigger: second comment-only edit to re-test the Actions drift gate
 }
