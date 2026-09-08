@@ -14,4 +14,8 @@ public class OrderCancelRequested {
   public OrderState getState() {
     return state;
   }
+
+  public boolean isCancelled() {
+    return true;
+  }
 }
