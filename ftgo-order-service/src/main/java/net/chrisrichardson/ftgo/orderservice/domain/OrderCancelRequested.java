@@ -18,4 +18,8 @@ public class OrderCancelRequested {
   public boolean isCancelled() {
     return true;
   }
+
+  public boolean isReopened() {
+    return false;
+  }
 }
