@@ -1,0 +1,33 @@
+name: Baseline Refresh
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::241765568243:role/drift-gate-actions-oidc-role
+          aws-region: us-east-1
+
+      - name: Build git bundle
+        run: git bundle create /tmp/baseline.bundle --all
+
+      - name: Upload to S3
+        run: |
+          SHA="${{ github.sha }}"
+          aws s3 cp /tmp/baseline.bundle "s3://codeintent-drift-gate-baselines-241765568243/baselines/ftgo-application/${SHA}.bundle"
+          aws s3 cp /tmp/baseline.bundle "s3://codeintent-drift-gate-baselines-241765568243/baselines/ftgo-application/latest.bundle"
