@@ -3,7 +3,7 @@ package net.chrisrichardson.ftgo.orderservice.domain;
 import io.eventuate.tram.events.common.DomainEvent;
 import net.chrisrichardson.ftgo.orderservice.api.events.OrderState;
 
-public class OrderCancelRequested implements DomainEvent {
+public class OrderCancelRequested {
   private OrderState state;
 
   public OrderCancelRequested(OrderState state) {
@@ -14,4 +14,17 @@ public class OrderCancelRequested implements DomainEvent {
   public OrderState getState() {
     return state;
   }
+
+  public boolean isCancelled() {
+    return true;
+  }
+
+  public boolean isReopened() {
+    return false;
+  }
+
+  public boolean isFinal() {
+    return true;
+  }
 }
+
