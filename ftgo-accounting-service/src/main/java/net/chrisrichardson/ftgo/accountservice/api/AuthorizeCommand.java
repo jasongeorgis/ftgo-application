@@ -1,3 +1,5 @@
+// TEST COMMENT FOR MR PIPELINE
+
 package net.chrisrichardson.ftgo.accountservice.api;
 
 import io.eventuate.tram.commands.common.Command;
@@ -42,4 +44,6 @@ public class AuthorizeCommand implements Command {
   public void setOrderId(Long orderId) {
     this.orderId = orderId;
   }
+  // trigger: second comment-only edit to re-test the Actions drift gate
+  // trigger: verify renamed workflow + decoupled exit code
 }
