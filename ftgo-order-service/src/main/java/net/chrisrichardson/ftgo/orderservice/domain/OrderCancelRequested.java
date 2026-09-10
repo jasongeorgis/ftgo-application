@@ -22,5 +22,9 @@ public class OrderCancelRequested {
   public boolean isReopened() {
     return false;
   }
+
+  public boolean isFinal() {
+    return true;
+  }
 }
 
